@@ -32,5 +32,5 @@ jobs:
       - name: Send ready-to-go fuchsia environnement
         uses: actions/upload-artifact@v2
         with:
-          name: disks
-          path: disks/
+          name: fuchsia
+          path: fuchsia.zip
