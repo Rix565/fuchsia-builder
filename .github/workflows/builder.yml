@@ -1,4 +1,4 @@
-name: Deploy
+name: Builder
 
 on:
   workflow_dispatch:
@@ -6,7 +6,31 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    steps:     
-       - name: Installing dependencies
-         run: |
-          echo coucou
+
+    steps:
+      - name: Prepare to download source
+        run: |
+         curl -sO https://storage.googleapis.com/fuchsia-ffx/ffx-linux && chmod +x ffx-linux && ./ffx-linux platform preflight
+      - name : Install dependencies (if not installed)
+        run : |
+         sudo apt-get install curl git unzip
+         sudo apt-get install ccache
+      - name: Download source
+        run: |
+         curl -s "https://fuchsia.googlesource.com/fuchsia/+/HEAD/scripts/bootstrap?format=TEXT" | base64 --decode | bash
+      - name: Prepare to build
+        run : |
+         cp ~/fuchsia/.jiri_root/bin/jiri ~/bin
+         ln -s ~/fuchsia/scripts/fx ~/bin
+         fx set core.qemu-x64 --ccache
+      - name: Build Fuschia
+        run : |
+         fx build
+      - name: Compress build
+        run : |
+         zip -r fuchsia.zip fuchsia
+      - name: Send ready-to-go fuchsia environnement
+        uses: actions/upload-artifact@v2
+        with:
+          name: disks
+          path: disks/
